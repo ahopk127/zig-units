@@ -1,13 +1,22 @@
-//! By convention, root.zig is the root source file when making a library. If
-//! you are making an executable, the convention is to delete this file and
-//! start with main.zig instead.
 const std = @import("std");
-const testing = std.testing;
 
-pub export fn add(a: i32, b: i32) i32 {
-    return a + b;
-}
+pub const NUM_DIMENSIONS: isize = 9;
 
-test "basic add functionality" {
-    try testing.expect(add(3, 7) == 10);
+/// A unit equal to a constant multiple of the base unit.
+/// Most units are linear, notable exceptions are Celsius and Fahrenheit.
+pub const LinearUnit = struct {
+    magnitude: f64,
+    dimension: [NUM_DIMENSIONS]i16,
+};
+
+/// Units could not be converted because they have different dimensions.
+pub const IncompatibleDimensions = error.IncompatibleDimensions;
+
+/// Converts a value from the unit `from` to the unit `to`.
+pub fn convert(value: f64, from: LinearUnit, to: LinearUnit) !f64 {
+    if (!std.mem.eql(i16, &from.dimension, &to.dimension)) {
+        return IncompatibleDimensions;
+    }
+
+    return value * from.magnitude / to.magnitude;
 }
