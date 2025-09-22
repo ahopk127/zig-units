@@ -7,6 +7,28 @@ pub const NUM_DIMENSIONS: isize = 9;
 pub const Linear = struct {
     magnitude: f64,
     dimension: [NUM_DIMENSIONS]i16,
+    pub fn times(self: Linear, other: Linear) Linear {
+        var newDimension: [NUM_DIMENSIONS]i16 = undefined;
+        for (0..NUM_DIMENSIONS) |i| {
+            newDimension[i] = self.dimension[i] + other.dimension[i];
+        }
+        return Linear{ .magnitude = self.magnitude * other.magnitude, .dimension = newDimension };
+    }
+    pub fn dividedBy(self: Linear, other: Linear) Linear {
+        var newDimension: [NUM_DIMENSIONS]i16 = undefined;
+        for (0..NUM_DIMENSIONS) |i| {
+            newDimension[i] = self.dimension[i] - other.dimension[i];
+        }
+        return Linear{ .magnitude = self.magnitude / other.magnitude, .dimension = newDimension };
+    }
+    pub fn toExponent(self: Linear, exponent: i16) Linear {
+        var newDimension: [NUM_DIMENSIONS]i16 = undefined;
+        for (0..NUM_DIMENSIONS) |i| {
+            newDimension[i] = self.dimension[i] * exponent;
+        }
+        const newMagnitude: f64 = std.math.pow(f64, self.magnitude, @floatFromInt(exponent));
+        return Linear{ .magnitude = newMagnitude, .dimension = newDimension };
+    }
 };
 
 /// Units could not be converted because they have different dimensions.
