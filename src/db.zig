@@ -13,7 +13,23 @@ pub const UnitDatabase = struct {
         return try units.convert(value, fromUnit, toUnit);
     }
     pub fn get_unit(self: *UnitDatabase, name: []const u8) !units.Linear {
-        return self.units.get(name) orelse return UnitNotFound;
+        if (self.units.get(name)) |unit| {
+            return unit;
+        }
+
+        var i = name.len - 1;
+        while (i > 0) : (i -= 1) {
+            if (self.try_prefix(name[0..i], name[i..name.len])) |unit| {
+                return unit;
+            }
+        }
+
+        return UnitNotFound;
+    }
+    fn try_prefix(self: *UnitDatabase, prefixName: []const u8, unitName: []const u8) ?units.Linear {
+        const prefix = self.prefixes.get(prefixName) orelse return null;
+        const unit = self.units.get(unitName) orelse return null;
+        return unit.scaledBy(prefix);
     }
     pub fn free(self: *UnitDatabase) void {
         self.units.deinit();

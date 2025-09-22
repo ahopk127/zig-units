@@ -7,6 +7,9 @@ pub const NUM_DIMENSIONS: isize = 9;
 pub const Linear = struct {
     magnitude: f64,
     dimension: [NUM_DIMENSIONS]i16,
+    pub fn scaledBy(self: Linear, multiplier: f64) Linear {
+        return Linear{ .magnitude = self.magnitude * multiplier, .dimension = self.dimension };
+    }
     pub fn times(self: Linear, other: Linear) Linear {
         var newDimension: [NUM_DIMENSIONS]i16 = undefined;
         for (0..NUM_DIMENSIONS) |i| {
