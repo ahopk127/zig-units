@@ -27,13 +27,20 @@ pub const UnitDatabase = struct {
         std.debug.print("Unknown unit '{s}'.\n", .{name});
         return UnitNotFound;
     }
+    fn get_unit_or_number(self: *UnitDatabase, name: []const u8) !units.Linear {
+        if (std.fmt.parseFloat(f64, name)) |n| {
+            return units.ONE.scaledBy(n);
+        } else |_| {
+            return self.get_unit(name);
+        }
+    }
     fn parse_exponent(self: *UnitDatabase, name: []const u8) !units.Linear {
         if (std.mem.indexOfScalar(u8, name, '^')) |expIndex| {
-            const unit = try self.get_unit(name[0..expIndex]);
+            const unit = try self.get_unit_or_number(name[0..expIndex]);
             const exponent = try std.fmt.parseInt(i16, name[expIndex + 1 .. name.len], 10);
             return unit.toExponent(exponent);
         } else {
-            return self.get_unit(name);
+            return self.get_unit_or_number(name);
         }
     }
     fn parse_fraction(self: *UnitDatabase, name: []const u8) !units.Linear {
