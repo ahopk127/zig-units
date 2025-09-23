@@ -32,22 +32,8 @@ pub fn main() !void {
     }
 
     var units_db = db.new(allocator);
-    defer units_db.free();
-
-    try units_db.eval_line("s\tbase\t0");
-    try units_db.eval_line("m\tbase\t1");
-    try units_db.eval_line("kg\tbase\t2");
-
-    try units_db.units.put("min", second.scaledBy(60.0));
-    try units_db.units.put("hr", second.scaledBy(3600.0));
-    try units_db.units.put("g", gram);
-    try units_db.units.put("L", litre);
-
-    try units_db.prefixes.put("μ", 1e-6);
-    try units_db.prefixes.put("u", 1e-6);
-    try units_db.prefixes.put("m", 1e-3);
-    try units_db.prefixes.put("k", 1e3);
-    try units_db.prefixes.put("M", 1e6);
+    defer units_db.free(allocator);
+    try units_db.load_file("unitfile", allocator);
 
     try stdout.print("Enter value to convert from: ", .{});
     try bw.flush();

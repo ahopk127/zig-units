@@ -1,0 +1,64 @@
+# base units
+s	base	0
+m	base	1
+kg	base	2
+rad	base	3
+K	base	4
+A	base	5
+mol	base	6
+cd	base	7
+b	base	8
+
+# aliases for base units
+second	alias	s
+metre	alias	m
+meter	alias	m
+kilogram	alias	kg
+kelvin	alias	K
+ampere	alias	A
+mole	alias	mol
+candela	alias	cd
+radian	alias	rad
+bit	alias	b
+
+# some linear units
+g	linear	1/1000 kg
+min	linear	60 s
+hr	linear	60 min
+L	linear	1/1000 m^3
+
+# temperature units
+# degC	affine	kelvin	273.15
+rankine	linear	1/1.8 kelvin
+# degF	affine	rankine	459.67
+
+# basic prefixes
+kilo	prefix	1000^1
+k	prefix	kilo
+K	prefix	kilo
+mega	prefix	1000^2
+M	prefix	mega
+
+milli	prefix	1000^-1
+m	prefix	milli
+micro	prefix	1000^-2
+μ	prefix	micro
+u	prefix	micro
+
+# angle-related units
+tau	linear	6.283185307179586
+τ	alias	tau
+pi	linear	0.5 tau
+π	alias	pi
+
+turn	linear	tau radian
+degree	linear	1/360 turn
+deg	alias	degree
+arcminute	linear	1/60 degree
+arcmin	alias	arcminute
+arcsecond	linear	1/60 arcminute
+arcsec	alias	arcsecond
+gradian	linear	1/400 turn
+
+darian	linear	turn/pi
+dar	alias	darian
