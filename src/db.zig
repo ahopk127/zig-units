@@ -12,6 +12,11 @@ pub const UnitDatabase = struct {
         const toUnit = try self.get_unit(to);
         return try units.convert(value, fromUnit, toUnit);
     }
+    pub fn convert_expression(self: *UnitDatabase, from: []const u8, to: []const u8) !f64 {
+        const fromUnit = try self.parse_expression(from);
+        const toUnit = try self.parse_expression(to);
+        return try units.convert(1.0, fromUnit, toUnit);
+    }
     pub fn get_unit(self: *UnitDatabase, name: []const u8) !units.Linear {
         if (self.units.get(name)) |unit| {
             return unit;
