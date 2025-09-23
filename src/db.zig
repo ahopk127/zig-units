@@ -3,6 +3,7 @@ const std = @import("std");
 const units = @import("units.zig");
 
 pub const UnitNotFound = error.UnitNotFound;
+pub const InvalidLineFormat = error{ TooFewElements, InvalidLineType, InvalidBaseIndex };
 
 pub const UnitDatabase = struct {
     units: std.StringHashMap(units.Linear),
@@ -31,6 +32,11 @@ pub const UnitDatabase = struct {
 
         std.debug.print("Unknown unit '{s}'.\n", .{name});
         return UnitNotFound;
+    }
+    fn try_prefix(self: *UnitDatabase, prefixName: []const u8, unitName: []const u8) ?units.Linear {
+        const prefix = self.prefixes.get(prefixName) orelse return null;
+        const unit = self.units.get(unitName) orelse return null;
+        return unit.scaledBy(prefix);
     }
     fn get_unit_or_number(self: *UnitDatabase, name: []const u8) !units.Linear {
         if (std.fmt.parseFloat(f64, name)) |n| {
@@ -69,10 +75,33 @@ pub const UnitDatabase = struct {
 
         return product;
     }
-    fn try_prefix(self: *UnitDatabase, prefixName: []const u8, unitName: []const u8) ?units.Linear {
-        const prefix = self.prefixes.get(prefixName) orelse return null;
-        const unit = self.units.get(unitName) orelse return null;
-        return unit.scaledBy(prefix);
+    pub fn eval_line(self: *UnitDatabase, line: []const u8) !void {
+        const first_space = std.mem.indexOfAny(u8, line, " \t") orelse return InvalidLineFormat.TooFewElements;
+        const second_space = std.mem.indexOfAnyPos(u8, line, first_space + 1, " \t") orelse return InvalidLineFormat.TooFewElements;
+
+        const name = line[0..first_space];
+        const line_type = line[first_space + 1 .. second_space];
+        const value = line[second_space + 1 .. line.len];
+
+        if (std.mem.eql(u8, line_type, "base")) {
+            const index = try std.fmt.parseInt(usize, value, 10);
+            if (index >= units.NUM_DIMENSIONS) {
+                return InvalidLineFormat.InvalidBaseIndex;
+            }
+            var dimension = [_]i16{0} ** units.NUM_DIMENSIONS;
+            dimension[index] = 1;
+            const unit = units.Linear{ .magnitude = 1.0, .dimension = dimension };
+            try self.units.put(name, unit);
+        } else if (std.mem.eql(u8, line_type, "alias")) {
+            const unit = try self.get_unit(value);
+            try self.units.put(name, unit);
+        } else if (std.mem.eql(u8, line_type, "linear")) {
+            const unit = try self.parse_expression(value);
+            try self.units.put(name, unit);
+        } else if (std.mem.eql(u8, line_type, "prefix")) {
+            const prefix = try std.fmt.parseFloat(f64, value);
+            try self.prefixes.put(name, prefix);
+        } else return InvalidLineFormat.InvalidLineType;
     }
     pub fn free(self: *UnitDatabase) void {
         self.units.deinit();

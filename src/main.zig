@@ -34,8 +34,10 @@ pub fn main() !void {
     var units_db = db.new(allocator);
     defer units_db.free();
 
-    try units_db.units.put("m", metre);
-    try units_db.units.put("s", second);
+    try units_db.eval_line("s\tbase\t0");
+    try units_db.eval_line("m\tbase\t1");
+    try units_db.eval_line("kg\tbase\t2");
+
     try units_db.units.put("min", second.scaledBy(60.0));
     try units_db.units.put("hr", second.scaledBy(3600.0));
     try units_db.units.put("g", gram);
