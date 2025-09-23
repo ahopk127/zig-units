@@ -2,6 +2,8 @@ const std = @import("std");
 
 pub const NUM_DIMENSIONS: isize = 9;
 
+pub const ONE = Linear{ .magnitude = 1.0, .dimension = [_]i16{0} ** NUM_DIMENSIONS };
+
 /// A unit equal to a constant multiple of the base unit.
 /// Most units are linear, notable exceptions are Celsius and Fahrenheit.
 pub const Linear = struct {

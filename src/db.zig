@@ -24,7 +24,38 @@ pub const UnitDatabase = struct {
             }
         }
 
+        std.debug.print("Unknown unit {s}.\n", .{name});
         return UnitNotFound;
+    }
+    fn parse_exponent(self: *UnitDatabase, name: []const u8) !units.Linear {
+        if (std.mem.indexOfScalar(u8, name, '^')) |expIndex| {
+            const unit = try self.get_unit(name[0..expIndex]);
+            const exponent = try std.fmt.parseInt(i16, name[expIndex + 1 .. name.len], 10);
+            return unit.toExponent(exponent);
+        } else {
+            return self.get_unit(name);
+        }
+    }
+    fn parse_fraction(self: *UnitDatabase, name: []const u8) !units.Linear {
+        if (std.mem.indexOfScalar(u8, name, '/')) |slashIndex| {
+            const numerator = try self.parse_exponent(name[0..slashIndex]);
+            const denominator = try self.parse_exponent(name[slashIndex + 1 .. name.len]);
+            return numerator.dividedBy(denominator);
+        } else {
+            return self.parse_exponent(name);
+        }
+    }
+    pub fn parse_expression(self: *UnitDatabase, name: []const u8) !units.Linear {
+        var product = units.ONE;
+        var it = std.mem.splitScalar(u8, name, ' ');
+        while (it.next()) |el| {
+            if (el.len == 0) continue;
+
+            const unit = try self.parse_fraction(el);
+            product = product.times(unit);
+        }
+
+        return product;
     }
     fn try_prefix(self: *UnitDatabase, prefixName: []const u8, unitName: []const u8) ?units.Linear {
         const prefix = self.prefixes.get(prefixName) orelse return null;
