@@ -25,6 +25,9 @@ pub const UnitDatabase = struct {
     pub fn get_unit(self: *UnitDatabase, name: []const u8) !units.Linear {
         if (self.units.get(name)) |unit| {
             return unit;
+        } else if (name.len <= 1) {
+            std.debug.print("Unknown unit '{s}'.\n", .{name});
+            return UnitNotFound;
         }
 
         var i = name.len - 1;
@@ -76,7 +79,7 @@ pub const UnitDatabase = struct {
     }
     fn parse_unit_fraction(self: *UnitDatabase, name: []const u8) !units.Linear {
         if (std.mem.indexOfScalar(u8, name, '/')) |slashIndex| {
-            const numerator = try self.parse_unit_exponent(name[0..slashIndex]);
+            const numerator = if (slashIndex == 0) units.ONE else try self.parse_unit_exponent(name[0..slashIndex]);
             const denominator = try self.parse_unit_exponent(name[slashIndex + 1 .. name.len]);
             return numerator.dividedBy(denominator);
         } else {
