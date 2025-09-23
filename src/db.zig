@@ -39,7 +39,7 @@ pub const UnitDatabase = struct {
     }
     fn try_prefix(self: *UnitDatabase, prefixName: []const u8, unitName: []const u8) ?units.Linear {
         const prefix = self.prefixes.get(prefixName) orelse return null;
-        const unit = self.units.get(unitName) orelse return null;
+        const unit = self.get_unit(unitName) catch return null;
         return unit.scaledBy(prefix);
     }
     fn get_unit_or_number(self: *UnitDatabase, name: []const u8) !units.Linear {
