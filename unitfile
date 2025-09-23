@@ -21,29 +21,118 @@ candela	alias	cd
 radian	alias	rad
 bit	alias	b
 
-# some linear units
-g	linear	1/1000 kg
-min	linear	60 s
-hr	linear	60 min
-L	linear	1/1000 m^3
+# SI prefixes - magnifying
+deka	prefix	10
+da	prefix	deka
+hecto	prefix	100
+h	prefix	hecto
 
-# temperature units
-# degC	affine	kelvin	273.15
-rankine	linear	1/1.8 kelvin
-# degF	affine	rankine	459.67
-
-# basic prefixes
 kilo	prefix	1000^1
 k	prefix	kilo
 K	prefix	kilo
 mega	prefix	1000^2
 M	prefix	mega
+giga	prefix	1000^3
+G	prefix	giga
+tera	prefix	1000^4
+T	prefix	tera
+peta	prefix	1000^5
+P	prefix	peta
+exa	prefix	1000^6
+E	prefix	exa
+zetta	prefix	1000^7
+Z	prefix	zetta
+yotta	prefix	1000^8
+Y	prefix	yotta
+ronna	prefix	1000^9
+R	prefix	ronna
+quecca	prefix	1000^10
+Q	prefix	quecca
+
+# SI prefixes - shrinking
+deci	prefix	0.1
+d	prefix	deci
+centi	prefix	0.01
+c	prefix	centi
 
 milli	prefix	1000^-1
 m	prefix	milli
 micro	prefix	1000^-2
 μ	prefix	micro
 u	prefix	micro
+nano	prefix	1000^-3
+n	prefix	nano
+pico	prefix	1000^-4
+p	prefix	pico
+femto	prefix	1000^-5
+f	prefix	femto
+atto	prefix	1000^-6
+a	prefix	atto
+zepto	prefix	1000^-7
+z	prefix	zepto
+yocto	prefix	1000^-8
+y	prefix	yocto
+ronto	prefix	1000^-9
+r	prefix	ronto
+quecto	prefix	1000^-10
+q	prefix	quecto
+
+# named SI units
+steradian	linear	rad^2
+sr	alias	steradian
+hertz	linear	s^-1
+Hz	alias	hertz
+newton	linear	kg m/s^2
+N	alias	newton
+pascal	linear	N/m^2
+Pa	alias	pascal
+joule	linear	N m
+J	alias	joule
+watt	linear	J/s
+W	alias	watt
+coulomb	linear	A s
+C	alias	coulomb
+volt	linear	J/C
+V	alias	volt
+farad	linear	C/V
+F	alias	farad
+ohm	linear	V/A
+Ω	alias	ohm
+siemens	linear	A/V
+S	alias	siemens
+weber	linear	V s
+Wb	alias	weber
+tesla	linear	Wb/m^2
+T	alias	tesla
+henry	linear	Wb/A
+H	alias	henry
+lumen	linear	cd sr
+lm	alias	lumen
+lux	linear	lm/m^2
+lx	alias	lux
+
+# misc metric units
+g	linear	1/1000 kg
+minute	linear	60 s
+min	alias	minute
+hour	linear	60 min
+hr	alias	hour
+litre	linear	1/1000 m^3
+L	alias	litre
+l	alias	litre
+are	linear	100 m^2
+a	alias	are
+hectare	linear	100 are
+au	linear	149597870700 m  # astronomical unit = avg distance between Earth and Sun
+tonne	linear	Mg
+t	alias	tonne
+e	linear	1.602176634e-19 C  # charge of the electron
+G	linear	9.80665 m/s^2
+
+# temperature units
+# degC	affine	kelvin	273.15
+rankine	linear	1/1.8 kelvin
+# degF	affine	rankine	459.67
 
 # angle-related units
 tau	linear	6.283185307179586
@@ -59,6 +148,54 @@ arcmin	alias	arcminute
 arcsecond	linear	1/60 arcminute
 arcsec	alias	arcsecond
 gradian	linear	1/400 turn
+grad	alias	gradian
 
 darian	linear	turn/pi
 dar	alias	darian
+
+# IMPERIAL/USC UNITS
+# length
+inch	linear	0.0254 m
+in	alias	inch
+foot	linear	12 in
+ft	alias	foot
+yard	linear	3 ft
+yd	alias	yard
+
+hand	linear	4 in
+fathom	linear	2 yard
+chain	linear	11 fathom
+furlong	linear	10 chain
+mile	linear	8 furlong
+mi	alias	mile
+league	linear	3 mile
+
+# area
+acre	linear	chain furlong
+
+# volume
+teaspoon	linear	4.92892159375 mL  # source: Wikipedia
+tsp	alias	teaspoon
+tablespoon	linear	3 tsp
+tbsp	alias	tablespoon
+fluidounce	linear	2 tbsp
+floz	alias	fluidounce
+gill	linear	4 floz
+cup	linear	2 gill
+USpint	linear	2 cup
+USquart	linear	2 USpint
+USqt	alias	USquart
+USgallon	linear	4 USqt
+USgal	alias	USgallon
+barrel_oil	linear	42 USgal
+bbl	alias	barrel_oil
+
+# mass
+ounce	linear	28.349523125 g
+oz	alias	ounce
+pound	linear	16 oz
+lb	alias	pound
+shortton	linear	2000 lb
+st	alias	shortton
+longton	linear	2240 lb
+lt	alias	longton
