@@ -16,6 +16,10 @@ const hour: units.Linear = second.scaledBy(3.6e3);
 const gram: units.Linear = .{ .magnitude = 1e-3, .dimension = mass };
 
 pub fn main() !void {
+    const stdin_file = std.io.getStdIn().reader();
+    var br = std.io.bufferedReader(stdin_file);
+    const stdin = br.reader();
+
     const stdout_file = std.io.getStdOut().writer();
     var bw = std.io.bufferedWriter(stdout_file);
     const stdout = bw.writer();
@@ -47,15 +51,26 @@ pub fn main() !void {
     try units_db.units.put("m/s", metre.dividedBy(second));
     try units_db.units.put("km/h", kilometre.dividedBy(hour));
 
-    const result1 = try units_db.convert(15, "m/s", "km/h");
-    try stdout.print("15 m/s = {d:.0} km/h\n", .{result1});
-    const result2 = try units_db.convert(0.35, "m^3", "L");
-    try stdout.print("0.35 m^3 = {d:.0} L\n", .{result2});
-    const result3 = try units_db.convert(15, "Mm", "um");
-    try stdout.print("15 Mm = {} μm\n", .{result3});
+    try stdout.print("Enter value to convert: ", .{});
+    try bw.flush();
+    var input_buf: [256]u8 = undefined;
+    const amt = try stdin.read(&input_buf);
+    const line = std.mem.trimRight(u8, input_buf[0..amt], "\r\n");
+    const value = try std.fmt.parseFloat(f64, line);
 
-    const mps2 = try units_db.parse_expression("kg m/s^2");
-    try stdout.print("kg m/s^2 = {}\n", .{mps2});
+    try stdout.print("Enter unit to convert from: ", .{});
+    try bw.flush();
+    var input_buf2: [256]u8 = undefined;
+    const amt2 = try stdin.read(&input_buf2);
+    const from = std.mem.trimRight(u8, input_buf2[0..amt2], "\r\n");
 
-    try bw.flush(); // Don't forget to flush!
+    try stdout.print("Enter unit to convert to: ", .{});
+    try bw.flush();
+    var input_buf3: [256]u8 = undefined;
+    const amt3 = try stdin.read(&input_buf3);
+    const to = std.mem.trimRight(u8, input_buf3[0..amt3], "\r\n");
+
+    const result = try units_db.convert(value, from, to);
+    try stdout.print("{} {s} = {} {s}\n", .{ value, from, result, to });
+    try bw.flush();
 }

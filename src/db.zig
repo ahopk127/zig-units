@@ -24,7 +24,7 @@ pub const UnitDatabase = struct {
             }
         }
 
-        std.debug.print("Unknown unit {s}.\n", .{name});
+        std.debug.print("Unknown unit '{s}'.\n", .{name});
         return UnitNotFound;
     }
     fn parse_exponent(self: *UnitDatabase, name: []const u8) !units.Linear {
