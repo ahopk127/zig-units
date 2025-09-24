@@ -22,59 +22,54 @@ pub const UnitDatabase = struct {
         const toUnit = try self.parse_unit_expression(to);
         return try units.convert(1.0, fromUnit, toUnit);
     }
-    pub fn get_unit(self: *UnitDatabase, name: []const u8) !units.Linear {
+    pub fn get_unit(self: *UnitDatabase, name: []const u8) ?units.Linear {
         if (self.units.get(name)) |unit| {
             return unit;
-        } else if (name.len <= 1) {
-            std.debug.print("Unknown unit '{s}'.\n", .{name});
-            return UnitNotFound;
+        } else if (name.len < 1) {
+            // An empty string will cause 'i' to overflow, since it's a usize
+            return null;
         }
 
         var i = name.len - 1;
         while (i > 0) : (i -= 1) {
-            if (self.try_prefix(name[0..i], name[i..name.len])) |unit| {
-                return unit;
-            }
+            const prefix = self.prefixes.get(name[0..i]) orelse continue;
+            const unit = self.get_unit(name[i..name.len]) orelse continue;
+            return unit.scaledBy(prefix);
         }
 
         std.debug.print("Unknown unit '{s}'.\n", .{name});
-        return UnitNotFound;
+        return null;
     }
-    fn try_prefix(self: *UnitDatabase, prefixName: []const u8, unitName: []const u8) ?units.Linear {
-        const prefix = self.prefixes.get(prefixName) orelse return null;
-        const unit = self.get_unit(unitName) catch return null;
-        return unit.scaledBy(prefix);
-    }
-    fn get_unit_or_number(self: *UnitDatabase, name: []const u8) !units.Linear {
+    fn get_unit_or_number(self: *UnitDatabase, name: []const u8) ?units.Linear {
         if (std.fmt.parseFloat(f64, name)) |n| {
             return units.ONE.scaledBy(n);
         } else |_| {
             return self.get_unit(name);
         }
     }
-    fn get_prefix_or_number(self: *UnitDatabase, name: []const u8) !f64 {
+    fn get_prefix_or_number(self: *UnitDatabase, name: []const u8) ?f64 {
         if (std.fmt.parseFloat(f64, name)) |n| {
             return n;
         } else |_| {
-            return self.prefixes.get(name) orelse PrefixNotFound;
+            return self.prefixes.get(name);
         }
     }
     fn parse_unit_exponent(self: *UnitDatabase, name: []const u8) !units.Linear {
         if (std.mem.indexOfScalar(u8, name, '^')) |expIndex| {
-            const unit = try self.get_unit_or_number(name[0..expIndex]);
+            const unit = self.get_unit_or_number(name[0..expIndex]) orelse return UnitNotFound;
             const exponent = try std.fmt.parseInt(i16, name[expIndex + 1 .. name.len], 10);
             return unit.toExponent(exponent);
         } else {
-            return self.get_unit_or_number(name);
+            return self.get_unit_or_number(name) orelse UnitNotFound;
         }
     }
     fn parse_prefix_exponent(self: *UnitDatabase, name: []const u8) !f64 {
         if (std.mem.indexOfScalar(u8, name, '^')) |expIndex| {
-            const prefix = try self.get_prefix_or_number(name[0..expIndex]);
+            const prefix = self.get_prefix_or_number(name[0..expIndex]) orelse return PrefixNotFound;
             const exponent = try std.fmt.parseFloat(f64, name[expIndex + 1 .. name.len]);
             return std.math.pow(f64, prefix, exponent);
         } else {
-            return self.get_prefix_or_number(name);
+            return self.get_prefix_or_number(name) orelse PrefixNotFound;
         }
     }
     fn parse_unit_fraction(self: *UnitDatabase, name: []const u8) !units.Linear {
@@ -136,7 +131,7 @@ pub const UnitDatabase = struct {
             const unit = units.Linear{ .magnitude = 1.0, .dimension = dimension };
             try self.units.put(name, unit);
         } else if (std.mem.eql(u8, line_type, "alias")) {
-            const unit = try self.get_unit(value);
+            const unit = self.get_unit(value) orelse return UnitNotFound;
             try self.units.put(name, unit);
         } else if (std.mem.eql(u8, line_type, "linear")) {
             const unit = try self.parse_unit_expression(value);
