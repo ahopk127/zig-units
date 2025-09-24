@@ -179,3 +179,65 @@ pub fn new(allocator: std.mem.Allocator) UnitDatabase {
     const names = std.ArrayList([]const u8).init(allocator);
     return UnitDatabase{ .units = units_map, .prefixes = prefixes_map, .names = names };
 }
+
+const test_lines = [_][]const u8{
+    "s\tbase\t0",
+    "m\tbase\t1",
+    "kg\tbase\t2",
+    "rad\tbase\t3",
+    "k\tprefix\t1e+3",
+    "M\tprefix\t1e+6",
+    "m\tprefix\t1e-3",
+    "μ\tprefix\t1e-6",
+    "g\talias\tmkg",
+};
+
+test "load units & prefixes" {
+    var testdb = new(std.testing.allocator);
+    defer testdb.free(std.testing.allocator);
+    for (test_lines) |line| {
+        try testdb.eval_line(line, std.testing.allocator);
+    }
+
+    try std.testing.expectEqual(5, testdb.units.count());
+    try std.testing.expectEqual(4, testdb.prefixes.count());
+
+    try std.testing.expectEqual(units.METRE, testdb.get_unit("m"));
+    try std.testing.expectEqual(units.SECOND, testdb.get_unit("s"));
+    try std.testing.expectEqual(1e+3, testdb.prefixes.get("k"));
+    try std.testing.expectEqual(1e-3, testdb.prefixes.get("m"));
+}
+
+test "prefixed units" {
+    var testdb = new(std.testing.allocator);
+    defer testdb.free(std.testing.allocator);
+    for (test_lines) |line| {
+        try testdb.eval_line(line, std.testing.allocator);
+    }
+
+    const Mm = units.METRE.scaledBy(1e+6);
+    const km = units.METRE.scaledBy(1e+3);
+    const mm = units.METRE.scaledBy(1e-3);
+    const um = units.METRE.scaledBy(1e-6);
+    try std.testing.expectEqual(Mm, testdb.get_unit("kkm"));
+    try std.testing.expectEqual(Mm, testdb.get_unit("Mm"));
+    try std.testing.expectEqual(mm, testdb.get_unit("mm"));
+    try std.testing.expectEqual(um, testdb.get_unit("μm"));
+    try std.testing.expectEqual(km, testdb.get_unit("Mmm"));
+}
+
+test "expressions" {
+    var testdb = new(std.testing.allocator);
+    defer testdb.free(std.testing.allocator);
+    for (test_lines) |line| {
+        try testdb.eval_line(line, std.testing.allocator);
+    }
+
+    const joule = units.Linear{ .magnitude = 1.0, .dimension = [_]i16{ -2, 2, 1, 0, 0, 0, 0, 0, 0 } };
+    const joule_expression = "kg m^2/s^2";
+    try std.testing.expectEqual(joule, testdb.parse_unit_expression(joule_expression));
+
+    const femtojoule = joule.scaledBy(1e-15);
+    const femtojoule_expression = "μg km^2/Ms^2";
+    try std.testing.expectEqual(femtojoule, testdb.parse_unit_expression(femtojoule_expression));
+}
