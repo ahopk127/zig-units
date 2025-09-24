@@ -47,3 +47,37 @@ pub fn convert(value: f64, from: Linear, to: Linear) !f64 {
 
     return value * from.magnitude / to.magnitude;
 }
+
+const LENGTH = [_]i16{ 0, 1, 0, 0, 0, 0, 0, 0, 0 };
+const TIME = [_]i16{ 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+const MASS = [_]i16{ 0, 0, 1, 0, 0, 0, 0, 0, 0 };
+const VELOCITY = [_]i16{ -1, 1, 0, 0, 0, 0, 0, 0, 0 };
+const FORCE = [_]i16{ -2, 1, 1, 0, 0, 0, 0, 0, 0 };
+const metre = Linear{ .magnitude = 1.0, .dimension = LENGTH };
+const second = Linear{ .magnitude = 1.0, .dimension = TIME };
+const kilogram = Linear{ .magnitude = 1.0, .dimension = MASS };
+const km = Linear{ .magnitude = 1e3, .dimension = LENGTH };
+const kmph = Linear{ .magnitude = 1.0 / 3.6, .dimension = VELOCITY };
+const newton = Linear{ .magnitude = 1.0, .dimension = FORCE };
+
+test "can convert between metre and km" {
+    const result = try convert(12345.0, metre, km);
+    try std.testing.expectApproxEqRel(12.345, result, 1e-15);
+}
+
+test "can create km by scaling" {
+    const result = metre.scaledBy(1e3);
+    try std.testing.expectEqual(km, result);
+}
+
+test "can create km/h" {
+    const test_km = metre.scaledBy(1e3);
+    const test_hr = second.scaledBy(3.6e3);
+    const test_kmph = test_km.dividedBy(test_hr);
+    try std.testing.expectEqual(kmph, test_kmph);
+}
+
+test "can create newton using ×, ÷ and ^" {
+    const test_N = kilogram.times(metre).dividedBy(second.toExponent(2));
+    try std.testing.expectEqual(newton, test_N);
+}
