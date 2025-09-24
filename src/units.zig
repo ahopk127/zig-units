@@ -1,8 +1,22 @@
 const std = @import("std");
 
 pub const NUM_DIMENSIONS: isize = 9;
-
 pub const ONE = Linear{ .magnitude = 1.0, .dimension = [_]i16{0} ** NUM_DIMENSIONS };
+pub const SECOND = base(0);
+pub const METRE = base(1);
+pub const KILOGRAM = base(2);
+pub const RADIAN = base(3);
+pub const KELVIN = base(4);
+pub const AMPERE = base(5);
+pub const MOLE = base(6);
+pub const CANDELA = base(7);
+pub const BIT = base(8);
+
+fn base(id: usize) Linear {
+    var dimension = [_]i16{0} ** NUM_DIMENSIONS;
+    dimension[id] = 1;
+    return Linear{ .magnitude = 1.0, .dimension = dimension };
+}
 
 /// A unit equal to a constant multiple of the base unit.
 /// Most units are linear, notable exceptions are Celsius and Fahrenheit.
@@ -49,35 +63,30 @@ pub fn convert(value: f64, from: Linear, to: Linear) !f64 {
 }
 
 const LENGTH = [_]i16{ 0, 1, 0, 0, 0, 0, 0, 0, 0 };
-const TIME = [_]i16{ 1, 0, 0, 0, 0, 0, 0, 0, 0 };
-const MASS = [_]i16{ 0, 0, 1, 0, 0, 0, 0, 0, 0 };
 const VELOCITY = [_]i16{ -1, 1, 0, 0, 0, 0, 0, 0, 0 };
 const FORCE = [_]i16{ -2, 1, 1, 0, 0, 0, 0, 0, 0 };
-const metre = Linear{ .magnitude = 1.0, .dimension = LENGTH };
-const second = Linear{ .magnitude = 1.0, .dimension = TIME };
-const kilogram = Linear{ .magnitude = 1.0, .dimension = MASS };
 const km = Linear{ .magnitude = 1e3, .dimension = LENGTH };
 const kmph = Linear{ .magnitude = 1.0 / 3.6, .dimension = VELOCITY };
 const newton = Linear{ .magnitude = 1.0, .dimension = FORCE };
 
 test "can convert between metre and km" {
-    const result = try convert(12345.0, metre, km);
+    const result = try convert(12345.0, METRE, km);
     try std.testing.expectApproxEqRel(12.345, result, 1e-15);
 }
 
 test "can create km by scaling" {
-    const result = metre.scaledBy(1e3);
+    const result = METRE.scaledBy(1e3);
     try std.testing.expectEqual(km, result);
 }
 
 test "can create km/h" {
-    const test_km = metre.scaledBy(1e3);
-    const test_hr = second.scaledBy(3.6e3);
+    const test_km = METRE.scaledBy(1e3);
+    const test_hr = SECOND.scaledBy(3.6e3);
     const test_kmph = test_km.dividedBy(test_hr);
     try std.testing.expectEqual(kmph, test_kmph);
 }
 
 test "can create newton using ×, ÷ and ^" {
-    const test_N = kilogram.times(metre).dividedBy(second.toExponent(2));
+    const test_N = KILOGRAM.times(METRE).dividedBy(SECOND.toExponent(2));
     try std.testing.expectEqual(newton, test_N);
 }

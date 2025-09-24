@@ -4,19 +4,7 @@ const lib = @import("units_lib");
 const units = lib.units;
 const db = lib.db;
 
-const length: [9]i16 = .{ 0, 1, 0, 0, 0, 0, 0, 0, 0 };
-const volume: [9]i16 = .{ 0, 3, 0, 0, 0, 0, 0, 0, 0 };
-const mass: [9]i16 = .{ 0, 0, 1, 0, 0, 0, 0, 0, 0 };
-const time: [9]i16 = .{ 1, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-const metre: units.Linear = .{ .magnitude = 1e0, .dimension = length };
-const litre: units.Linear = .{ .magnitude = 1e-3, .dimension = volume };
-const second: units.Linear = .{ .magnitude = 1e0, .dimension = time };
-const gram: units.Linear = .{ .magnitude = 1e-3, .dimension = mass };
-
-const Args = struct {
-    round: bool,
-};
+const Args = struct { round: bool };
 
 fn parse_args(allocator: std.mem.Allocator) !Args {
     var args: Args = .{ .round = true };
