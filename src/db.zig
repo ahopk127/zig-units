@@ -156,7 +156,7 @@ pub const UnitDatabase = struct {
             if (std.mem.indexOfScalar(u8, commentless_line, '#')) |index| {
                 commentless_line = commentless_line[0..index];
             }
-            const trimmed_line = std.mem.trim(u8, commentless_line, " \t");
+            const trimmed_line = std.mem.trim(u8, commentless_line, " \t\r\n");
             if (trimmed_line.len == 0)
                 continue;
 
