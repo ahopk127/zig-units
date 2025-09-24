@@ -14,15 +14,26 @@ const litre: units.Linear = .{ .magnitude = 1e-3, .dimension = volume };
 const second: units.Linear = .{ .magnitude = 1e0, .dimension = time };
 const gram: units.Linear = .{ .magnitude = 1e-3, .dimension = mass };
 
+const Args = struct {
+    round: bool,
+};
+
+fn parse_args(allocator: std.mem.Allocator) !Args {
+    var args: Args = .{ .round = true };
+
+    var it = try std.process.argsWithAllocator(allocator);
+    defer it.deinit();
+
+    while (it.next()) |arg| {
+        if (std.mem.eql(u8, arg, "-e")) {
+            args.round = false;
+        }
+    }
+
+    return args;
+}
+
 pub fn main() !void {
-    const stdin_file = std.io.getStdIn().reader();
-    var br = std.io.bufferedReader(stdin_file);
-    const stdin = br.reader();
-
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer {
@@ -30,6 +41,16 @@ pub fn main() !void {
         if (deinit_status == .leak)
             std.debug.print("Memory leak detected\n", .{});
     }
+
+    const args = try parse_args(allocator);
+
+    const stdin_file = std.io.getStdIn().reader();
+    var br = std.io.bufferedReader(stdin_file);
+    const stdin = br.reader();
+
+    const stdout_file = std.io.getStdOut().writer();
+    var bw = std.io.bufferedWriter(stdout_file);
+    const stdout = bw.writer();
 
     var units_db = db.new(allocator);
     defer units_db.free(allocator);
@@ -48,6 +69,10 @@ pub fn main() !void {
     const to = std.mem.trimRight(u8, input_buf2[0..amt2], "\r\n");
 
     const result = try units_db.convert_expression(from, to);
-    try stdout.print("{s} = {} {s}\n", .{ from, result, to });
+    if (args.round) {
+        try stdout.print("{s} = {d:.0} {s}\n", .{ from, result, to });
+    } else {
+        try stdout.print("{s} = {e:.12} {s}\n", .{ from, result, to });
+    }
     try bw.flush();
 }
