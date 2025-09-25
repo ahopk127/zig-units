@@ -8,20 +8,26 @@ pub const InvalidLineFormat = error{ TooFewElements, InvalidLineType, InvalidBas
 
 const MAX_LINE_LENGTH = 65536;
 
+/// A special data structure that contains units and prefixes,
+/// and can parse expressions and calculate prefixed units.
 pub const UnitDatabase = struct {
     units: std.StringHashMap(units.Linear),
     prefixes: std.StringHashMap(f64),
     names: std.ArrayList([]const u8),
+    /// Gets two possibly prefixed units from the database,
+    /// and converts the provided value from one to the other.
     pub fn convert(self: *UnitDatabase, value: f64, from: []const u8, to: []const u8) !f64 {
         const fromUnit = try self.get_unit(from);
         const toUnit = try self.get_unit(to);
         return try units.convert(value, fromUnit, toUnit);
     }
+    /// Parses two unit expressions, and converts one to the other.
     pub fn convert_expression(self: *UnitDatabase, from: []const u8, to: []const u8) !f64 {
         const fromUnit = try self.parse_unit_expression(from);
         const toUnit = try self.parse_unit_expression(to);
         return try units.convert(1.0, fromUnit, toUnit);
     }
+    /// Gets a unit from its name, which can contain prefixes.
     pub fn get_unit(self: *UnitDatabase, name: []const u8) ?units.Linear {
         if (self.units.get(name)) |unit| {
             return unit;
@@ -40,6 +46,8 @@ pub const UnitDatabase = struct {
         std.debug.print("Unknown unit '{s}'.\n", .{name});
         return null;
     }
+    /// Gets a unit from the provided name.
+    /// If the name is a number, returns it multiplied by units.ONE.
     fn get_unit_or_number(self: *UnitDatabase, name: []const u8) ?units.Linear {
         if (std.fmt.parseFloat(f64, name)) |n| {
             return units.ONE.scaledBy(n);
@@ -47,6 +55,7 @@ pub const UnitDatabase = struct {
             return self.get_unit(name);
         }
     }
+    /// Gets the value of the provided prefix or number.
     fn get_prefix_or_number(self: *UnitDatabase, name: []const u8) ?f64 {
         if (std.fmt.parseFloat(f64, name)) |n| {
             return n;
@@ -90,6 +99,7 @@ pub const UnitDatabase = struct {
             return self.parse_prefix_exponent(name);
         }
     }
+    /// Parses a unit expression and returns the value.
     pub fn parse_unit_expression(self: *UnitDatabase, name: []const u8) !units.Linear {
         var product = units.ONE;
         var it = std.mem.splitScalar(u8, name, ' ');
@@ -102,6 +112,7 @@ pub const UnitDatabase = struct {
 
         return product;
     }
+    /// Parses a prefix expression and returns the value.
     pub fn parse_prefix_expression(self: *UnitDatabase, name: []const u8) !f64 {
         var product: f64 = 1.0;
         var it = std.mem.splitScalar(u8, name, ' ');
@@ -111,6 +122,8 @@ pub const UnitDatabase = struct {
         }
         return product;
     }
+    /// Evaluate one line of a unit datafile.
+    /// This can add a new unit or prefix to the database.
     pub fn eval_line(self: *UnitDatabase, line: []const u8, allocator: std.mem.Allocator) !void {
         const first_space = std.mem.indexOfAny(u8, line, " \t") orelse return InvalidLineFormat.TooFewElements;
         const second_space = std.mem.indexOfAnyPos(u8, line, first_space + 1, " \t") orelse return InvalidLineFormat.TooFewElements;
@@ -144,6 +157,8 @@ pub const UnitDatabase = struct {
             return InvalidLineFormat.InvalidLineType;
         }
     }
+    /// Loads a file from the provided path,
+    /// evaluating each non-empty line with eval_line.
     pub fn load_file(self: *UnitDatabase, path: []const u8, allocator: std.mem.Allocator) !void {
         var file = try std.fs.cwd().openFile(path, .{});
         defer file.close();
@@ -163,6 +178,8 @@ pub const UnitDatabase = struct {
             try self.eval_line(trimmed_line, allocator);
         }
     }
+    /// Frees the memory associated with this database.
+    /// Provide the same allocator you used to create it.
     pub fn free(self: *UnitDatabase, allocator: std.mem.Allocator) void {
         self.units.deinit();
         self.prefixes.deinit();
@@ -173,6 +190,8 @@ pub const UnitDatabase = struct {
     }
 };
 
+/// Creates a new database.
+/// Free it with its free method, using the same allocator.
 pub fn new(allocator: std.mem.Allocator) UnitDatabase {
     const units_map = std.StringHashMap(units.Linear).init(allocator);
     const prefixes_map = std.StringHashMap(f64).init(allocator);

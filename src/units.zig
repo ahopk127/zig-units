@@ -23,9 +23,11 @@ fn base(id: usize) Linear {
 pub const Linear = struct {
     magnitude: f64,
     dimension: [NUM_DIMENSIONS]i16,
+    /// Returns this unit multiplied by a number.
     pub fn scaledBy(self: Linear, multiplier: f64) Linear {
         return Linear{ .magnitude = self.magnitude * multiplier, .dimension = self.dimension };
     }
+    /// Returns this unit multiplied by other.
     pub fn times(self: Linear, other: Linear) Linear {
         var newDimension: [NUM_DIMENSIONS]i16 = undefined;
         for (0..NUM_DIMENSIONS) |i| {
@@ -33,6 +35,7 @@ pub const Linear = struct {
         }
         return Linear{ .magnitude = self.magnitude * other.magnitude, .dimension = newDimension };
     }
+    /// Returns this unit divided by other.
     pub fn dividedBy(self: Linear, other: Linear) Linear {
         var newDimension: [NUM_DIMENSIONS]i16 = undefined;
         for (0..NUM_DIMENSIONS) |i| {
@@ -40,6 +43,7 @@ pub const Linear = struct {
         }
         return Linear{ .magnitude = self.magnitude / other.magnitude, .dimension = newDimension };
     }
+    /// Returns this unit raised to an integer exponent.
     pub fn toExponent(self: Linear, exponent: i16) Linear {
         var newDimension: [NUM_DIMENSIONS]i16 = undefined;
         for (0..NUM_DIMENSIONS) |i| {
