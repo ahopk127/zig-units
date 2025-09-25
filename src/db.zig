@@ -233,7 +233,8 @@ test "expressions" {
         try testdb.eval_line(line, std.testing.allocator);
     }
 
-    const joule = units.Linear{ .magnitude = 1.0, .dimension = [_]i16{ -2, 2, 1, 0, 0, 0, 0, 0, 0 } };
+    const ENERGY = [3]i16{ -2, 2, 1 } ++ [_]i16{0} ** (units.NUM_DIMENSIONS - 3);
+    const joule = units.Linear{ .magnitude = 1.0, .dimension = ENERGY };
     const joule_expression = "kg m^2/s^2";
     try std.testing.expectEqual(joule, testdb.parse_unit_expression(joule_expression));
 

@@ -62,9 +62,9 @@ pub fn convert(value: f64, from: Linear, to: Linear) !f64 {
     return value * from.magnitude / to.magnitude;
 }
 
-const LENGTH = [_]i16{ 0, 1, 0, 0, 0, 0, 0, 0, 0 };
-const VELOCITY = [_]i16{ -1, 1, 0, 0, 0, 0, 0, 0, 0 };
-const FORCE = [_]i16{ -2, 1, 1, 0, 0, 0, 0, 0, 0 };
+const LENGTH = [3]i16{ 0, 1, 0 } ++ [_]i16{0} ** (NUM_DIMENSIONS - 3);
+const VELOCITY = [3]i16{ -1, 1, 0 } ++ [_]i16{0} ** (NUM_DIMENSIONS - 3);
+const FORCE = [3]i16{ -2, 1, 1 } ++ [_]i16{0} ** (NUM_DIMENSIONS - 3);
 const km = Linear{ .magnitude = 1e3, .dimension = LENGTH };
 const kmph = Linear{ .magnitude = 1.0 / 3.6, .dimension = VELOCITY };
 const newton = Linear{ .magnitude = 1.0, .dimension = FORCE };
