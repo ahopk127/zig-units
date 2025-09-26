@@ -1,8 +1,10 @@
-# Zig Units
+# Unit Converter in Zig
 
 This is a unit converter written in Zig, which I made in order to learn the language - and manual memory management.
 
 The design of this system was inspired by my other project [7Units](https://ahopkins.ca/projects/#7units), but I made this one in a week instead of 6.5 years, so it has a substantially smaller featureset.
+
+This project is not officially associated with Zig in any way.
 
 ## Setup, Installation and Usage
 
