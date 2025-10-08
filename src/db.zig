@@ -13,7 +13,6 @@ const MAX_LINE_LENGTH = 65536;
 pub const UnitDatabase = struct {
     units: std.StringHashMap(units.Linear),
     prefixes: std.StringHashMap(f64),
-    names: std.ArrayList([]const u8),
     /// Gets two possibly prefixed units from the database,
     /// and converts the provided value from one to the other.
     pub fn convert(self: *UnitDatabase, value: f64, from: []const u8, to: []const u8) !f64 {
@@ -124,13 +123,12 @@ pub const UnitDatabase = struct {
     }
     /// Evaluate one line of a unit datafile.
     /// This can add a new unit or prefix to the database.
+    /// `allocator` should be the same allocator used to create the database.
     pub fn eval_line(self: *UnitDatabase, line: []const u8, allocator: std.mem.Allocator) !void {
         const first_space = std.mem.indexOfAny(u8, line, " \t") orelse return InvalidLineFormat.TooFewElements;
         const second_space = std.mem.indexOfAnyPos(u8, line, first_space + 1, " \t") orelse return InvalidLineFormat.TooFewElements;
 
         const name = try allocator.dupe(u8, line[0..first_space]);
-        try self.names.append(name);
-
         const line_type = line[first_space + 1 .. second_space];
         const value = line[second_space + 1 .. line.len];
 
@@ -181,12 +179,19 @@ pub const UnitDatabase = struct {
     /// Frees the memory associated with this database.
     /// Provide the same allocator you used to create it.
     pub fn free(self: *UnitDatabase, allocator: std.mem.Allocator) void {
-        self.units.deinit();
-        self.prefixes.deinit();
-        for (self.names.items) |name| {
+        var unitKeys = self.units.keyIterator();
+        while (unitKeys.next()) |namePtr| {
+            const name = namePtr.*;
             allocator.free(name);
         }
-        self.names.deinit();
+        self.units.deinit();
+
+        var prefixKeys = self.prefixes.keyIterator();
+        while (prefixKeys.next()) |namePtr| {
+            const name = namePtr.*;
+            allocator.free(name);
+        }
+        self.prefixes.deinit();
     }
 };
 
@@ -195,8 +200,7 @@ pub const UnitDatabase = struct {
 pub fn new(allocator: std.mem.Allocator) UnitDatabase {
     const units_map = std.StringHashMap(units.Linear).init(allocator);
     const prefixes_map = std.StringHashMap(f64).init(allocator);
-    const names = std.ArrayList([]const u8).init(allocator);
-    return UnitDatabase{ .units = units_map, .prefixes = prefixes_map, .names = names };
+    return UnitDatabase{ .units = units_map, .prefixes = prefixes_map };
 }
 
 const test_lines = [_][]const u8{
