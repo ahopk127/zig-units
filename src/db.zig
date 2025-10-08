@@ -26,6 +26,11 @@ pub const UnitDatabase = struct {
         const toUnit = try self.parse_unit_expression(to);
         return try units.convertLinear(1.0, fromUnit, toUnit);
     }
+    pub fn convert_unit_or_expression(self: *UnitDatabase, value: f64, from: []const u8, to: []const u8) !f64 {
+        const fromUnit = self.get_unit(from) orelse units.Unit{ .linear = try self.parse_unit_expression(from) };
+        const toUnit = self.get_unit(to) orelse units.Unit{ .linear = try self.parse_unit_expression(to) };
+        return try units.convert(value, fromUnit, toUnit);
+    }
     /// Gets a unit from its name, which can contain prefixes.
     pub fn get_unit(self: *UnitDatabase, name: []const u8) ?units.Unit {
         if (self.units.get(name)) |unit| {
@@ -45,7 +50,6 @@ pub const UnitDatabase = struct {
             }
         }
 
-        std.debug.print("Unknown unit '{s}'.\n", .{name});
         return null;
     }
     /// Gets a unit from the provided name.
@@ -156,6 +160,13 @@ pub const UnitDatabase = struct {
         } else if (std.mem.eql(u8, line_type, "prefix")) {
             const prefix = try self.parse_prefix_expression(value);
             try self.prefixes.put(name, prefix);
+        } else if (std.mem.eql(u8, line_type, "affine")) {
+            const third_space = std.mem.indexOfAny(u8, value, " \t") orelse return InvalidLineFormat.TooFewElements;
+            const linearName = value[0..third_space];
+            const linear = self.get_linear_or_number(linearName) orelse return UnitNotFound;
+            const zero = try std.fmt.parseFloat(f64, value[third_space + 1 .. value.len]);
+            const unit = units.Affine{ .dimension = linear.dimension, .magnitude = linear.magnitude, .zero = zero };
+            try self.units.put(name, units.Unit{ .affine = unit });
         } else {
             std.debug.print("Invalid line: '{s}'\n", .{line});
             return InvalidLineFormat.InvalidLineType;

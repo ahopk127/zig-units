@@ -46,6 +46,13 @@ pub fn main() !void {
 
     try stdout.print("Enter value to convert from: ", .{});
     try bw.flush();
+    var input_buf0: [256]u8 = undefined;
+    const amt0 = try stdin.read(&input_buf0);
+    const line0 = std.mem.trimRight(u8, input_buf0[0..amt0], "\r\n");
+    const value = if (line0.len == 0) 1.0 else try std.fmt.parseFloat(f64, line0);
+
+    try stdout.print("Enter unit to convert from: ", .{});
+    try bw.flush();
     var input_buf1: [256]u8 = undefined;
     const amt1 = try stdin.read(&input_buf1);
     const from = std.mem.trimRight(u8, input_buf1[0..amt1], "\r\n");
@@ -56,11 +63,11 @@ pub fn main() !void {
     const amt2 = try stdin.read(&input_buf2);
     const to = std.mem.trimRight(u8, input_buf2[0..amt2], "\r\n");
 
-    const result = try units_db.convert_expression(from, to);
+    const result = try units_db.convert_unit_or_expression(value, from, to);
     if (args.round) {
-        try stdout.print("{s} = {d:.0} {s}\n", .{ from, result, to });
+        try stdout.print("{d:.0} {s} = {d:.0} {s}\n", .{ value, from, result, to });
     } else {
-        try stdout.print("{s} = {e:.12} {s}\n", .{ from, result, to });
+        try stdout.print("{d:.0} {s} = {e:.12} {s}\n", .{ value, from, result, to });
     }
     try bw.flush();
 }

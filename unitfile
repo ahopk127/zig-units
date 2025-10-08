@@ -130,9 +130,9 @@ e	linear	1.602176634e-19 C  # charge of the electron
 G	linear	9.80665 m/s^2
 
 # temperature units
-# degC	affine	kelvin	273.15
+degC	affine	kelvin	273.15
 rankine	linear	1/1.8 kelvin
-# degF	affine	rankine	459.67
+degF	affine	rankine	459.67
 
 # angle-related units
 tau	linear	6.283185307179586
