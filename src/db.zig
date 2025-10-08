@@ -11,7 +11,7 @@ const MAX_LINE_LENGTH = 65536;
 /// A special data structure that contains units and prefixes,
 /// and can parse expressions and calculate prefixed units.
 pub const UnitDatabase = struct {
-    units: std.StringHashMap(units.Linear),
+    units: std.StringHashMap(units.Unit),
     prefixes: std.StringHashMap(f64),
     /// Gets two possibly prefixed units from the database,
     /// and converts the provided value from one to the other.
@@ -24,10 +24,10 @@ pub const UnitDatabase = struct {
     pub fn convert_expression(self: *UnitDatabase, from: []const u8, to: []const u8) !f64 {
         const fromUnit = try self.parse_unit_expression(from);
         const toUnit = try self.parse_unit_expression(to);
-        return try units.convert(1.0, fromUnit, toUnit);
+        return try units.convertLinear(1.0, fromUnit, toUnit);
     }
     /// Gets a unit from its name, which can contain prefixes.
-    pub fn get_unit(self: *UnitDatabase, name: []const u8) ?units.Linear {
+    pub fn get_unit(self: *UnitDatabase, name: []const u8) ?units.Unit {
         if (self.units.get(name)) |unit| {
             return unit;
         } else if (name.len < 1) {
@@ -39,7 +39,10 @@ pub const UnitDatabase = struct {
         while (i > 0) : (i -= 1) {
             const prefix = self.prefixes.get(name[0..i]) orelse continue;
             const unit = self.get_unit(name[i..name.len]) orelse continue;
-            return unit.scaledBy(prefix);
+            switch (unit) {
+                .linear => |linear| return units.Unit{ .linear = linear.scaledBy(prefix) },
+                else => continue,
+            }
         }
 
         std.debug.print("Unknown unit '{s}'.\n", .{name});
@@ -47,11 +50,14 @@ pub const UnitDatabase = struct {
     }
     /// Gets a unit from the provided name.
     /// If the name is a number, returns it multiplied by units.ONE.
-    fn get_unit_or_number(self: *UnitDatabase, name: []const u8) ?units.Linear {
+    fn get_linear_or_number(self: *UnitDatabase, name: []const u8) ?units.Linear {
         if (std.fmt.parseFloat(f64, name)) |n| {
             return units.ONE.scaledBy(n);
         } else |_| {
-            return self.get_unit(name);
+            switch (self.get_unit(name) orelse return null) {
+                .linear => |linear| return linear,
+                else => return null,
+            }
         }
     }
     /// Gets the value of the provided prefix or number.
@@ -64,11 +70,11 @@ pub const UnitDatabase = struct {
     }
     fn parse_unit_exponent(self: *UnitDatabase, name: []const u8) !units.Linear {
         if (std.mem.indexOfScalar(u8, name, '^')) |expIndex| {
-            const unit = self.get_unit_or_number(name[0..expIndex]) orelse return UnitNotFound;
+            const unit = self.get_linear_or_number(name[0..expIndex]) orelse return UnitNotFound;
             const exponent = try std.fmt.parseInt(i16, name[expIndex + 1 .. name.len], 10);
             return unit.toExponent(exponent);
         } else {
-            return self.get_unit_or_number(name) orelse UnitNotFound;
+            return self.get_linear_or_number(name) orelse UnitNotFound;
         }
     }
     fn parse_prefix_exponent(self: *UnitDatabase, name: []const u8) !f64 {
@@ -140,13 +146,13 @@ pub const UnitDatabase = struct {
             var dimension = [_]i16{0} ** units.NUM_DIMENSIONS;
             dimension[index] = 1;
             const unit = units.Linear{ .magnitude = 1.0, .dimension = dimension };
-            try self.units.put(name, unit);
+            try self.units.put(name, units.Unit{ .linear = unit });
         } else if (std.mem.eql(u8, line_type, "alias")) {
             const unit = self.get_unit(value) orelse return UnitNotFound;
             try self.units.put(name, unit);
         } else if (std.mem.eql(u8, line_type, "linear")) {
             const unit = try self.parse_unit_expression(value);
-            try self.units.put(name, unit);
+            try self.units.put(name, units.Unit{ .linear = unit });
         } else if (std.mem.eql(u8, line_type, "prefix")) {
             const prefix = try self.parse_prefix_expression(value);
             try self.prefixes.put(name, prefix);
@@ -198,7 +204,7 @@ pub const UnitDatabase = struct {
 /// Creates a new database.
 /// Free it with its free method, using the same allocator.
 pub fn new(allocator: std.mem.Allocator) UnitDatabase {
-    const units_map = std.StringHashMap(units.Linear).init(allocator);
+    const units_map = std.StringHashMap(units.Unit).init(allocator);
     const prefixes_map = std.StringHashMap(f64).init(allocator);
     return UnitDatabase{ .units = units_map, .prefixes = prefixes_map };
 }
@@ -225,8 +231,10 @@ test "load units & prefixes" {
     try std.testing.expectEqual(5, testdb.units.count());
     try std.testing.expectEqual(4, testdb.prefixes.count());
 
-    try std.testing.expectEqual(units.METRE, testdb.get_unit("m"));
-    try std.testing.expectEqual(units.SECOND, testdb.get_unit("s"));
+    const m = units.Unit{ .linear = units.METRE };
+    const s = units.Unit{ .linear = units.SECOND };
+    try std.testing.expectEqual(m, testdb.get_unit("m"));
+    try std.testing.expectEqual(s, testdb.get_unit("s"));
     try std.testing.expectEqual(1e+3, testdb.prefixes.get("k"));
     try std.testing.expectEqual(1e-3, testdb.prefixes.get("m"));
 }
@@ -238,10 +246,10 @@ test "prefixed units" {
         try testdb.eval_line(line, std.testing.allocator);
     }
 
-    const Mm = units.METRE.scaledBy(1e+6);
-    const km = units.METRE.scaledBy(1e+3);
-    const mm = units.METRE.scaledBy(1e-3);
-    const um = units.METRE.scaledBy(1e-6);
+    const Mm = units.Unit{ .linear = units.METRE.scaledBy(1e+6) };
+    const km = units.Unit{ .linear = units.METRE.scaledBy(1e+3) };
+    const mm = units.Unit{ .linear = units.METRE.scaledBy(1e-3) };
+    const um = units.Unit{ .linear = units.METRE.scaledBy(1e-6) };
     try std.testing.expectEqual(Mm, testdb.get_unit("kkm"));
     try std.testing.expectEqual(Mm, testdb.get_unit("Mm"));
     try std.testing.expectEqual(mm, testdb.get_unit("mm"));
