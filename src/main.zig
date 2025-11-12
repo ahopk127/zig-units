@@ -44,20 +44,20 @@ pub fn main() !void {
     defer units_db.free(allocator);
     try units_db.load_file("unitfile", allocator);
 
-    try stdout.print("Enter value to convert from: ", .{});
+    try stdout.print("Enter value to convert from, or blank to convert an expression: ", .{});
     try bw.flush();
     var input_buf0: [256]u8 = undefined;
     const amt0 = try stdin.read(&input_buf0);
     const line0 = std.mem.trimRight(u8, input_buf0[0..amt0], "\r\n");
     const value = if (line0.len == 0) 1.0 else try std.fmt.parseFloat(f64, line0);
 
-    try stdout.print("Enter unit to convert from: ", .{});
+    try stdout.print("Enter unit or expression to convert from: ", .{});
     try bw.flush();
     var input_buf1: [256]u8 = undefined;
     const amt1 = try stdin.read(&input_buf1);
     const from = std.mem.trimRight(u8, input_buf1[0..amt1], "\r\n");
 
-    try stdout.print("Enter unit to convert to: ", .{});
+    try stdout.print("Enter unit or expression to convert to: ", .{});
     try bw.flush();
     var input_buf2: [256]u8 = undefined;
     const amt2 = try stdin.read(&input_buf2);
